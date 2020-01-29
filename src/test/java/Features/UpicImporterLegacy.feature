@@ -15,15 +15,15 @@ Feature: UPIC Importer Legacy
     When I open Microsoft SQL Management
     And I go to UPIC DB
     Then I verify that new revision is populated in 'Revision' table with the new feed data
-      | RevisionUID | ReleaseLevelUID | ImportDate |
-      | UID         | 40              | dateTime   |
+      | RevisionUID | ReleaseLevelUID | ImportDate                |
+      | 115500      | 40              | 2020-01-28 16:10:24.187   |
 
     When I open the RabbitMQ management
     And I click "UPIC Translator Legacy" on 'Queues' tab
-    Then I verify that an AMQP message arrives from "UPIC Importer Legacy" indicating availability of new Incentives data
+    Then I verify that an AMQP message arrives from "UPIC Importer Legacy" indicating availability of new data
     And I verify that the message received from "UPIC Importer Legacy" include the following data:
-      | timestamp | jobID   | status  | datastoreId | message          | startTime  | endTime   | UPIC RevisionUID | programsCount     | corporateZipCount | postalZipCount    |
-      | time_Data | ID_data | SUCCESS | ID          | import succeeded | time_Data  | time_Data | 40               | imported, Failed  | imported, Failed  | imported, Failed  |
+      | jobID   | status  | startTime  | endTime   | elapsedTime  | RevisionUID | programsCount     | corporateZipCount | postalZipCount    | message          |
+      | ID_data | SUCCESS | time_Data  | time_Data | 322 seconds  | 115500      | Imported, Failed  | Imported, Failed  | Imported, Failed  | Import succeeded |
 
 
  # AH
@@ -41,24 +41,28 @@ Feature: UPIC Importer Legacy
     When I open Microsoft SQL Management
     And I go to UPIC DB
     Then I verify that new revision is populated in 'Revision' table with the new feed data
-      | RevisionUID | ReleaseLevelUID | ImportDate |
-      | UID         | 40              | dateTime   |
+      | RevisionUID | ReleaseLevelUID | ImportDate                |
+      | 115500      | 40              | 2020-01-28 16:10:24.187   |
 
 
-     #AH
-  Scenario: Verify that 'Importer Legacy' is not triggered by a failed AMQP message emitted by the 'UPIC translator'
+  #AH
+  Scenario Outline: Verify that 'Importer Legacy' is not triggered by a failed AMQP message emitted by the 'UPIC Importer New'
     Given I open the RabbitMQ management
     When I click "UPIC Importer Legacy" on 'Queues' tab
     And I expand "Publish message" section
-    And I fill the following fields for publishing an AMQP message
-      | propertyKey   | propertyValue     | payload      | statusInPayload | messageInPayload  |
-      | content_type  | application/json  | jsonContent  | FAIL            | Automatic trigger |
+    And I fill the following fields for publishing an AMQP message <propertyKey>, <propertyValue>, <payload>, <statusInPayload>, <messageInPayload>
     And I click "Publish Message" button
     Then I verify that "running importer legacy" message is not displayed in the log file for "UPIC Importer Legacy"
+    And I verify that "Ignoring import event with invalid status" message is displayed in the log file for "UPIC Importer Legacy"
 
     When I open Microsoft SQL Management
     And I go to UPIC DB
     Then I verify that no new revision is populated in 'Revision' table
+
+    Examples:
+      | propertyKey   | propertyValue     | payload      | statusInPayload | messageInPayload  |
+      | content_type  | application/json  | jsonContent  | FAILURE         | Automatic trigger |
+      | content_type  | application/json  | jsonContent  | FAIL            | Automatic trigger |
 
 
   #AH
@@ -73,6 +77,38 @@ Feature: UPIC Importer Legacy
     Then I verify that "running importer with jobId" message is displayed in the log file for "UPIC Importer Legacy"
     And I verify that error message is displayed in the log file for "UPIC Importer Legacy"
 
+
+  #AH
+  Scenario: Verify that 'Importer Legacy' sends an AMQP message upon completion when it fail
+     # Preconditions
+    Given I connect to kube environment
+    When I edit the timeout to 2 in configmap file for "UPIC Incentives Importer"
+    And I save the change made
+    Then I verify that configmap was updated
+    #-----------------
+
+    When I open the RabbitMQ management
+    And I click "UPIC Importer Legacy" on 'Queues' tab
+    And I expand "Publish message" section
+    And I fill the following fields for publishing an AMQP message
+      | propertyKey   | propertyValue     | payload      | statusInPayload | messageInPayload  |
+      | content_type  | application/json  | jsonContent  | SUCCESS         | Automatic trigger |
+    And I click "Publish Message" button
+    Then I verify that "running importer with jobId" message is displayed in the log file for "UPIC Importer Legacy"
+    And I verify that "ERROR Importer" message is displayed in the log file for "UPIC Importer Legacy"
+
+    When I open Microsoft SQL Management
+    And I go to UPIC DB
+    Then I verify that new revision is populated in 'Revision' table with the new feed data
+      | RevisionUID | ReleaseLevelUID | ImportDate                |
+      | 115500      | -99             | 2020-01-28 16:10:24.187   |
+
+    When I open the RabbitMQ management
+    And I click "UPIC Translator Legacy" on 'Queues' tab
+    Then I verify that an AMQP message arrives from "UPIC Importer Legacy" indicating availability of new data
+    And I verify that the message received from "UPIC Importer Legacy" include the following data:
+      | jobID   | status  | startTime  | endTime   | elapsedTime  | RevisionUID | programsCount     | corporateZipCount | postalZipCount    | message             |
+      | ID_data | FAILURE | time_Data  | time_Data | 120 seconds  | 115500      | Imported, Failed  | Imported, Failed  | Imported, Failed  | Importer timed out  |
 
 
 

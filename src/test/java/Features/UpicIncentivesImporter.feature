@@ -9,7 +9,7 @@ Feature: Incentives Importer
       | propertyKey   | propertyValue     | payload      | statusInPayload | messageInPayload  |
       | content_type  | application/json  | jsonContent  | SUCCESS         | Automatic trigger |
     And I click "Publish Message" button
-    Then I verify that "running incentives importer with jobId" message is displayed in the log file for "UPIC Incentives Importer"
+    Then I verify that "running incentives importer for message: TriggerMessage" message is displayed in the log file for "UPIC Incentives Importer"
     And I verify that "uploaded file to datastore with datastoreId:" message is displayed in the log file for "UPIC Incentives Importer"
     And I verify that "completed incentives import process with a status of: SUCCESS and result of: import succeeded." message is displayed in the log file for "UPIC Incentives Importer"
 
@@ -39,7 +39,7 @@ Feature: Incentives Importer
 
 
   # AH
-  Scenario: Verify that ‘Incentives Importer’ retrieves Incentive Data for StdRates source from OMSProgramIncentive DB
+  Scenario: Verify that 'Incentives Importer' retrieves Incentive Data for StdRates source from OMSProgramIncentive DB
     # Preconditions
     Given I connect to kube environment
     When I edit the program.source to "StdRates" in configmap file for "UPIC Incentives Importer"
