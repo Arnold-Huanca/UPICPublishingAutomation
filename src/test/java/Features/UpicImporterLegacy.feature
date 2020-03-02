@@ -80,7 +80,7 @@ Feature: UPIC Importer Legacy
 
   #AH
   Scenario: Verify that 'Importer Legacy' sends an AMQP message upon completion when it fail
-     # Preconditions
+    # Preconditions
     Given I connect to kube environment
     When I edit the timeout to 2 in configmap file for "UPIC Incentives Importer"
     And I save the change made
@@ -100,8 +100,8 @@ Feature: UPIC Importer Legacy
     When I open Microsoft SQL Management
     And I go to UPIC DB
     Then I verify that new revision is populated in 'Revision' table with the new feed data
-      | RevisionUID | ReleaseLevelUID | ImportDate                |
-      | 115500      | -99             | 2020-01-28 16:10:24.187   |
+      | RevisionUID | ImportDate                |
+      | 115500      | 2020-01-28 16:10:24.187   |
 
     When I open the RabbitMQ management
     And I click "UPIC Translator Legacy" on 'Queues' tab
@@ -111,4 +111,14 @@ Feature: UPIC Importer Legacy
       | ID_data | FAILURE | time_Data  | time_Data | 120 seconds  | 115500      | Imported, Failed  | Imported, Failed  | Imported, Failed  | Importer timed out  |
 
 
+  #AH
+  Scenario: Verify that 'Importer Legacy' skips the UPIC data when the feed is older than or equal than the last imported
+    # Preconditions
+    Given I upload a file with a previous or equal date of the last imported
+    Then I verify that file is uploaded to sftp.importer folder
+    #-----------------
 
+    When I open the log file for 'UPIC Importer Legacy'
+    Then I verify that "Skipping upic-feed ..." message is displayed with the following data:
+     | upic-feed filename,  imported_date,  last_imported_date,  current_datastore_id,  job_id,  namespace  |
+    And I verify that "Importer has skipped the feed" message is displayed in the log file for "UPIC Importer Legacy"

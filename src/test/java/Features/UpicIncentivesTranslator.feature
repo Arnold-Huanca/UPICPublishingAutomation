@@ -34,7 +34,7 @@ Feature: Incentives Translator
 
 
   # AH
-  Scenario: Verify that 'UPIC Incentives Translator' retrieves Incentive Data for StdRates source and translate it into the target database
+ Scenario Outline: Verify that 'UPIC Incentives Translator' retrieves Incentive Data for StdRates source and translate it into the target database
     # Preconditions
     Given I generate Incentives Data with "StdRates" source
     When I open Microsoft Azure Storage
@@ -101,7 +101,7 @@ Feature: Incentives Translator
 
 
   # AH
-  Scenario: Verify that 'UPIC Incentives Translator' does not translate the data  if the program count in the feed contains less than number of programs configured
+  Scenario: +
     # Preconditions
     Given I generate Incentives Data with less than 'program.minimumProgramsUPIC' number of programs configured by default 175 for UPIC and 85 for STDRATES
     When I open Microsoft Azure Storage

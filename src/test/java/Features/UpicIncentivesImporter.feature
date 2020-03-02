@@ -1,7 +1,7 @@
 Feature: Incentives Importer
 
   # AH
-  Scenario: Verify that 'Incentives Importer' retrieves Incentive Data for UPIC source from OMSProgramIncentive DB
+  Scenario: Verify that 'UPIC Incentives Importer' retrieves Incentive Data for UPIC source from OMSProgramIncentive DB
     Given I open the RabbitMQ management
     When I click "UPIC Incentives Importer" on 'Queues' tab
     And I expand "Publish message" section
@@ -39,7 +39,8 @@ Feature: Incentives Importer
 
 
   # AH
-  Scenario: Verify that 'Incentives Importer' retrieves Incentive Data for StdRates source from OMSProgramIncentive DB
+  # FCAUUPA-80 - The process with ‘STDRATES’ source is not working
+  Scenario: Verify that 'UPIC Incentives Importer' retrieves Incentive Data for StdRates source from OMSProgramIncentive DB
     # Preconditions
     Given I connect to kube environment
     When I edit the program.source to "StdRates" in configmap file for "UPIC Incentives Importer"
@@ -166,20 +167,4 @@ Feature: Incentives Importer
     And I rename the downloaded file to add ".zip" extension
     And I verify that every value updated is present in each file generated into the zip file
 
-
-  # AH
-  # This scenario needs AMQP message from the new UPIC Translator
-  Scenario Outline: Verify that an AMQP message arrives to 'UPI Incentives Importer' emitted by the 'UPIC translator'
-    Given I open the RabbitMQ management
-    When I click "UPIC Incentives Importer" on 'Queues' tab
-    And I expand "Get messages" section
-    And I click "Get Message(s)" button
-    Then I verify that the message received from "UPIC translator" include the following data:
-      | <timestamp> | <jobID>   | <status>  | <message>      | <startTime>  | <endTime>   |
-    And I verify that "running incentives importer with jobId" message is displayed in the log file for "UPIC Incentives Importer"
-
-    Examples:
-      | timestamp | jobID   | status  | message            | startTime  | endTime   |
-      | time_Data | ID_data | SUCCESS | Successful message | time_Data  | time_Data |
-      | time_Data | ID_data | FAIL    | Failed message     | time_Data  | time_Data |
 
